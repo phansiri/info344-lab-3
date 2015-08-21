@@ -31,7 +31,6 @@ from archive.permissions import IsOwnerOrReadOnly
 from django.http import Http404
 from ratelimit.mixins import RatelimitMixin
 
-# Lab 1 - url expander
 @ratelimit(key='ip', rate='10/m', block='True')
 @login_required(login_url='accounts/login/')
 def url_list(request):
@@ -41,13 +40,13 @@ def url_list(request):
         urlList = urlSites.objects.all().order_by('id')
         return render(request, 'archive/url_list.html', {'urlList': urlList})
 
-# @login_required
+@login_required
 @ratelimit(key='ip', rate='10/m', block='True')
 def url_detail(request, pk):
     urlDetail = get_object_or_404(urlSites, pk=pk)
     return render(request, 'archive/url_detail.html', {'urlDetail': urlDetail})
 
-# @login_required
+@login_required
 @ratelimit(key='ip', rate='10/m', block='True')
 def url_new(request):
     if request.method == "POST":
@@ -62,22 +61,6 @@ def url_new(request):
             post.finalUrl = source_code.url
             post.httpStatusCode = source_code.status_code
             post.pageTitle = soup.title.string
-            # upload to s3
-            # driver = webdriver.PhantomJS(service_log_path=os.path.devnull)
-            # driver.set_window_size(1024, 768)
-            # driver.get(post.finalUrl)
-            # name = datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
-            #
-            # conn = S3Connection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-            # b = conn.get_bucket(AWS_STORAGE_BUCKET_NAME)
-            # k = Key(b)
-            # nameFile = name + '.png'
-            # k.key = 'screensaver/' + nameFile
-            # driver.save_screenshot('/tmp/' + nameFile)
-            # k.set_contents_from_filename('/tmp/' + nameFile)
-            # k.make_public()
-            # os.remove('/tmp/' + nameFile)
-            # post.screenShot = STATIC_URL + "screensaver/" + nameFile
             updateS3(post, 'upload')
             post.save()
             return redirect('archive.views.url_detail', pk=post.pk)
@@ -85,7 +68,7 @@ def url_new(request):
         form = UrlForm()
     return render(request, 'archive/url_edit.html', {'form': form})
 
-# @login_required
+@login_required
 @ratelimit(key='ip', rate='10/m', block='True')
 def url_edit(request, pk):
     post = get_object_or_404(urlSites, pk=pk)
@@ -100,7 +83,7 @@ def url_edit(request, pk):
         form = UrlForm(instance=post)
     return render(request, 'archive/url_edit.html', {'form': form})
 
-# @login_required
+@login_required
 @ratelimit(key='ip', rate='10/m', block='True')
 def url_delete(request, pk):
     urlDelete = get_object_or_404(urlSites, pk=pk)
@@ -109,18 +92,19 @@ def url_delete(request, pk):
     return redirect('archive.views.url_list')
 
 def updateS3(post, status):
-    driver = webdriver.PhantomJS(service_log_path=os.path.devnull)
-    driver.set_window_size(1024, 768)
-    driver.get(post.finalUrl)
     conn = S3Connection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
     b = conn.get_bucket(AWS_STORAGE_BUCKET_NAME)
     k = Key(b)
     if status == 'upload':
+        driver = webdriver.PhantomJS(service_log_path=os.path.devnull)
+        driver.set_window_size(1024, 768)
+        driver.get(post.finalUrl)
         nameFile = str(post.pk) + '-' + datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S') + '.png'
         k.key = 'screensaver/' + nameFile
         driver.save_screenshot('/tmp/' + nameFile)
         k.set_contents_from_filename('/tmp/' + nameFile)
         k.make_public()
+        driver.service.process.kill()
         os.remove('/tmp/' + nameFile)
         post.screenShot = STATIC_URL + "screensaver/" + nameFile
     else:
@@ -159,3 +143,26 @@ class UserList(generics.ListAPIView):
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+class ApiDetail_Recapture(RatelimitMixin, generics.RetrieveAPIView):
+    ratelimit_key = 'ip'
+    ratelimit_rate = '10/m'
+    ratelimit_block = True
+    ratelimit_method = 'GET'
+
+    queryset = urlSites.objects.all()
+    serializer_class = UrlsSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+    def get(self, request, pk):
+        try:
+            recapUrl = urlSites.objects.get(pk=pk)
+        except urlSites.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        try:
+            updateS3(recapUrl, 'delete')
+            updateS3(recapUrl, 'upload')
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        recapUrl.save()
+        return Response(status=status.HTTP_201_CREATED)

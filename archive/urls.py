@@ -3,8 +3,6 @@ from django.conf.urls import url, patterns
 from . import views
 
 # Lab 2
-# from django.contrib import admin
-# admin.autodiscover()
 from django.contrib.auth import views as auth_views
 
 # Lab 3
@@ -20,12 +18,12 @@ urlpatterns = [
 
     # Lab 2
     url(r'^accounts/login/$', auth_views.login),
-    # url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
     url(r'^accounts/logout/$', 'django.contrib.auth.views.logout', {'next_page': '/lab3'}),
 
     # Lab 3
     url(r'^api/$', views.ApiList.as_view()),
     url(r'^api/(?P<pk>[0-9]+)/$', views.ApiDetail.as_view()),
+    url(r'^api/(?P<pk>[0-9]+)/recapture/$', views.ApiDetail_Recapture.as_view()),
     url(r'^users/$', views.UserList.as_view()),
     url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view()),
 ]
