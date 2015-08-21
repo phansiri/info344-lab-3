@@ -112,7 +112,7 @@ def updateS3(post, status):
         filePath = temp[4] + '/' + temp[5]
         b.delete_key(filePath)
 
-# Lab 3
+# Lab 3 - API authentication
 class ApiList(RatelimitMixin, generics.ListCreateAPIView):
     ratelimit_key = 'ip'
     ratelimit_rate = '10/m'
