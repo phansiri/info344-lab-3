@@ -1,0 +1,32 @@
+{% extends "archive/base.html" %}
+
+{% block content %}
+        <div class="post">
+            <div class="boardered">
+                <table>
+                    <tr>
+                        <td>Original URL: </td>
+                        <td>{{ urlDetail.originalUrl }}</td>
+                    </tr>
+                    <tr>
+                        <td>Title: </td>
+                        <td>{{ urlDetail.pageTitle }}</td>
+                    </tr>
+                    <tr>
+                        <td>Final URL: </td>
+                        <td><a href="{{ urlDetail.finalUrl }}" target="_blank">{{ urlDetail.finalUrl }}</a></td>
+                    </tr>
+                    <tr>
+                        <td>HTTP Status Code: </td>
+                        <td>{{ urlDetail.httpStatusCode }}</td>
+                    </tr>
+                    <tr>
+                        <td>Last Screenshot</td>
+                        <td><a href="{{ urlDetail.screenShot }}" target="_blank">{{ urlDetail.screenShot }}</a></td>
+                    </tr>
+                    <a id="delete_url" class="btn btn-danger" href="{% url "url_delete" pk=urlDetail.pk %}"><span class="glyphicon glyphicon-remove"></span></a>
+                    <a id="edit_url" class="btn btn-primary" href="{% url "url_edit" pk=urlDetail.pk %}"><span class="glyphicon glyphicon-edit"></span></a>
+                </table>
+            </div>
+        </div>
+{% endblock %}

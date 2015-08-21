@@ -1,0 +1,21 @@
+{% extends "archive/base.html" %}
+
+{% block content %}
+
+    <div class="post">
+        <h2>Archived URL's</h2>
+        <table class="table table-striped">
+            <tr>
+                <th>Title</th>
+                <th>Final URL</th>
+            </tr>
+            {% for url in urlList %}
+            <tr>
+                <td><a href="{% url "url_detail" pk=url.pk %}">{{ url.pageTitle }}</a></td>
+                <td>{{ url.finalUrl }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+{% endblock content %}

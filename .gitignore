@@ -1,0 +1,10 @@
+*.pyc
+__pycache__
+myvenv
+db.sqlite3
+.DS_Store
+mysql
+settings.py
+.gitold
+permissions.py
+ghostdriver.log
